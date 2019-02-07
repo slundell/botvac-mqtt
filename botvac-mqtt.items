@@ -1,0 +1,43 @@
+Group In_VacuumCleaner_Group "Botvac"
+
+
+String In_Vacuum_SendCommand "Command Botvac [MAP(vacuumcommand.map):%s]" (In_VacuumCleaner_Group) {mqtt=">[mosquitto:/home/vacuum/command:command:clean:Clean House],>[mosquitto:/home/vacuum/command:command:clean_again:Clean House],>[mosquitto:/home/vacuum/command:command:stop:Clean Stop]"}
+Number In_Vacuum_ConsequtiveCleaningCyclesStart "Number of consecutive cleanings to do" (In_VacuumCleaner_Group)
+Number In_Vacuum_ConsequtiveCleaningCyclesCurrent "Number of consecutive cleanings done" (In_VacuumCleaner_Group)
+
+Contact In_Vacuum_IsCleaning "Cleaning" (In_VacuumCleaner_Group, Vtl_Openhab_ChartingPersistance_Group) {mqtt="<[mosquitto:/home/vacuum/status/VacuumCurrent_mA:state:OPEN:0],<[mosquitto:/home/vacuum/status/VacuumCurrent_mA:state:CLOSED:\\d\\d+]"}
+Contact In_Vacuum_Online "Online" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/connected:state:CLOSED:2],<[mosquitto:/home/vacuum/connected:state:OPEN:0]"}
+
+String In_Vacuum_Clock /*"[%1$tE %1$tH:%1$tm:%1$ts]"*/ (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/time:state:default]"}
+
+Number In_Vacuum_Battery "Battery [%d]" <battery> (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/FuelPercent:state:default]"}
+Number In_Vacuum_BatteryVoltage "Battery voltage [%dmV]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/BatteryVoltage_mV:state:default]"}
+Number In_Vacuum_BatteryCurrent "Battery voltage [%dmA]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/BatteryCurrent_mA:state:default]"}
+//Number In_Vacuum_BatteryTemperature "BatteryTemperature [%dmC]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/BatteryTemperature_mC:state:default]"}
+Number In_Vacuum_Charger_mAH "Charger [%dmAh]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/Charger_mAH:state:default]"}
+Number In_Vacuum_Discharge_mAH "Discharge [%dmAh]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/Discharge_mAH:state:default]"}
+
+
+Number In_Vacuum_ExternalVoltage "External voltage [%dmV]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/ExternalVoltage_mV:state:default]"}
+
+Number In_Vacuum_VacuumCurrent "Fan motor, current [%dmA]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/VacuumCurrent_mA:state:default]"}
+//Number Hallis_SidebrushCurrent "Side brush, current [%dmA]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/SidebrushCurrent_mA:state:default]"}
+
+Contact In_Vacuum_ChargingActive "Charging" (In_VacuumCleaner_Group, Vtl_Openhab_HistoryPersistance_Group) {mqtt="<[mosquitto:/home/vacuum/status/ChargingActive:state:OPEN:0],<[mosquitto:/home/vacuum/status/ChargingActive:state:CLOSED:1]"}
+Contact In_Vacuum_ChargingEnabled "Charging enabled" (In_VacuumCleaner_Group, Vtl_Openhab_HistoryPersistance_Group) {mqtt="<[mosquitto:/home/vacuum/status/ChargingEnabled:state:OPEN:0],<[mosquitto:/home/vacuum/status/ChargingEnabled:state:CLOSED:1]"}
+Contact In_Vacuum_ConfidentOnFuel "Battery will last" (In_VacuumCleaner_Group, Vtl_Openhab_HistoryPersistance_Group) {mqtt="<[mosquitto:/home/vacuum/status/ConfidentOnFuel:state:OPEN:0],<[mosquitto:/home/vacuum/status/ConfidentOnFuel:state:CLOSED:1]"}
+Contact In_Vacuum_OnReservedFuel "Reserve fuel" (In_VacuumCleaner_Group, Vtl_Openhab_HistoryPersistance_Group) {mqtt="<[mosquitto:/home/vacuum/status/OnReservedFuel:state:OPEN:0],<[mosquitto:/home/vacuum/status/OnReservedFuel:state:CLOSED:1]"}
+Contact In_Vacuum_EmptyFuel "Battery flat" (In_VacuumCleaner_Group, Vtl_Openhab_HistoryPersistance_Group) {mqtt="<[mosquitto:/home/vacuum/status/EmptyFuel:state:OPEN:0],<[mosquitto:/home/vacuum/status/EmptyFuel:state:CLOSED:1]"}
+Contact In_Vacuum_BatteryFailure "Battery failure" (In_VacuumCleaner_Group, Vtl_Openhab_HistoryPersistance_Group, Vtl_ErrorDetectors_Group_Contact) {mqtt="<[mosquitto:/home/vacuum/status/BatteryFailure:state:OPEN:0],<[mosquitto:/home/vacuum/status/BatteryFailure:state:CLOSED:1]"}
+
+String In_Vacuum_Error "Error [MAP(vacuum.map):%s]" (In_VacuumCleaner_Group, Vtl_Openhab_Messages_Group, Vtl_Openhab_HistoryPersistance_Group) {mqtt="<[mosquitto:/home/vacuum/status/error:state:REGEX(s/.*?(\\d+).*/$1/)]"}
+//Number In_Vacuum_ErrorNumber "Error Number" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/error:state:REGEX(s/.*?(\\d+).*/$1/)]"}
+//Number In_Vacuum_ErrorText "Errro Message" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/error:state:REGEX(s/.*?\\d+(.*)/$1/g)]"}
+
+//Needs hex decoding
+//Number Hallis_CumulativeCleaningTimeInSecs "Runtime [%ds]" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/CumulativeCleaningTimeInSecs:state:default]"}
+//Number Hallis_CumulativeBatteryCycles "Charging cycles" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/CumulativeBatteryCycles:state:default]"}
+
+
+//String Hallis_SerialNumber "Serial number" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/Serial Number:state:default]"}
+//String Hallis_Model "Model" (In_VacuumCleaner_Group) {mqtt="<[mosquitto:/home/vacuum/status/Model:state:default]"}

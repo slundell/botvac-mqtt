@@ -1,0 +1,97 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+
+
+rule "Clean each morning"
+when
+    Time cron "00 00 10 ? * *"
+then
+    if (Vtl_Schedule_NoWork_Today.state == OFF) {
+        In_Entrence_Vacuum_ConsequtiveCleaningCyclesStart.postUpdate(2)
+        In_Entrence_Vacuum_SendCommand.sendCommand('clean')
+    }
+end
+
+
+//------------------------------------------ Device logic below
+rule "Set vacuum clock"
+
+when    
+    Item In_Entrence_Vacuum_Clock changed
+    or
+    Time cron 	"00 00 09 ? * mon"
+then
+    val SimpleDateFormat sdf = new SimpleDateFormat("'SetTime' 'Day' u 'Hour' HH 'Min' mm 'Sec' ss")
+    val String timestampString = sdf.format(new Date())
+    logInfo("hallis", timestampString)
+
+	publish("mosquitto","/home/entrence/vacuum/command", timestampString)
+end
+
+
+rule "Dim vacuum display" 
+when    
+    Item In_Entrence_Vacuum_SendCommand changed to "stop"
+    or
+    Item In_Entrence_Vacuum_ChargingActive changed to CLOSED
+then
+    if ((In_Entrence_Vacuum_SendCommand.state.toString == "stop") && (In_Entrence_Vacuum_ChargingActive.state == CLOSED)){
+        publish("mosquitto","/home/entrence/vacuum/command", "TestMode On")
+        Thread::sleep(500)
+        publish("mosquitto","/home/entrence/vacuum/command", "SetLED BacklightOff")        
+        Thread::sleep(500)
+        publish("mosquitto","/home/entrence/vacuum/command", "TestMode Off")
+    }
+end
+
+
+rule "Start continous vacuuming"
+    when Item In_Entrence_Vacuum_SendCommand received command "clean"
+then
+    In_Entrence_Vacuum_ConsequtiveCleaningCyclesCurrent.postUpdate(0)
+    if (In_Entrence_Vacuum_ConsequtiveCleaningCyclesStart.state == 0){
+        In_Entrence_Vacuum_ConsequtiveCleaningCyclesStart.postUpdate(1)
+    }
+    In_Entrence_Vacuum_ConsequtiveCleaningCyclesCurrent.postUpdate(In_Entrence_Vacuum_ConsequtiveCleaningCyclesStart.state)
+end
+
+rule "Started charging"
+    when Item In_Entrence_Vacuum_ChargingActive changed to CLOSED
+then
+    if ((In_Entrence_Vacuum_SendCommand.state.toString == "clean") || (In_Entrence_Vacuum_SendCommand.state.toString == "clean_again")){
+        In_Entrence_Vacuum_ConsequtiveCleaningCyclesCurrent.postUpdate((In_Entrence_Vacuum_ConsequtiveCleaningCyclesCurrent.state as Number) - 1)
+
+        if (In_Entrence_Vacuum_ConsequtiveCleaningCyclesCurrent.state <= 0){
+            In_Entrence_Vacuum_SendCommand.sendCommand("dock")
+        } else {
+            In_Entrence_Vacuum_SendCommand.sendCommand("clean_again")
+        }
+
+    } else if (In_Entrence_Vacuum_SendCommand.state.toString == "dock"){
+        In_Entrence_Vacuum_SendCommand.sendCommand("stop")
+        In_Entrence_Vacuum_ConsequtiveCleaningCyclesStart.postUpdate(3)
+    }
+end
+
+rule "Dock hallis - already in dock"
+    when Item In_Entrence_Vacuum_SendCommand received command "dock"
+then
+    if (In_Entrence_Vacuum_ChargingActive.state == CLOSED){
+        In_Entrence_Vacuum_SendCommand.sendCommand("stop")
+        In_Entrence_Vacuum_ConsequtiveCleaningCyclesStart.postUpdate(3)
+    }
+end
+
+
+rule "Vacuum error"
+when
+    Item In_Entrence_Vacuum_Error received command
+    or
+    Item In_Entrence_Vacuum_Error received update
+then
+    if ((In_Entrence_Vacuum_Error.state == null) || (In_Entrence_Vacuum_Error.state == NULL) || (In_Entrence_Vacuum_Error.state == "")){
+        In_Entrence_Vacuum_Error_Show.sendCommand(OFF)
+    } else {
+        In_Entrence_Vacuum_Error_Show.sendCommand(ON)
+    }
+end
